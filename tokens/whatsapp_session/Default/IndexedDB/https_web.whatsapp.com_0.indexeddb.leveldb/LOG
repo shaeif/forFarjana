@@ -1,0 +1,29 @@
+2025/09/12-13:10:42.868 8720 Reusing MANIFEST /home/shaeif/workspace/forFarjana/tokens/whatsapp_session/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/09/12-13:10:42.868 8720 Recovering log #876
+2025/09/12-13:10:42.909 8720 Reusing old log /home/shaeif/workspace/forFarjana/tokens/whatsapp_session/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/000876.log 
+2025/09/12-13:10:44.436 8720 Level-0 table #889: started
+2025/09/12-13:10:44.457 8720 Level-0 table #889: 652349 bytes OK
+2025/09/12-13:10:44.470 8720 Delete type=0 #876
+2025/09/12-13:10:44.471 8720 Manual compaction at level-0 from '\x00\x8c\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x8d\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/09/12-13:10:45.741 8722 Compacting 1@1 + 9@2 files
+2025/09/12-13:10:45.831 8722 Generated table #890@1: 78380 keys, 2243717 bytes
+2025/09/12-13:10:45.913 8722 Generated table #891@1: 46119 keys, 2211761 bytes
+2025/09/12-13:10:45.945 8722 Generated table #892@1: 10478 keys, 2168447 bytes
+2025/09/12-13:10:45.973 8722 Generated table #893@1: 2292 keys, 2147116 bytes
+2025/09/12-13:10:46.005 8722 Generated table #894@1: 3130 keys, 2155074 bytes
+2025/09/12-13:10:46.053 8722 Generated table #895@1: 21258 keys, 2217806 bytes
+2025/09/12-13:10:46.115 8722 Generated table #896@1: 32679 keys, 2242422 bytes
+2025/09/12-13:10:46.156 8722 Generated table #897@1: 50581 keys, 2188646 bytes
+2025/09/12-13:10:46.212 8722 Generated table #898@1: 81471 keys, 1929742 bytes
+2025/09/12-13:10:46.213 8722 Compacted 1@1 + 9@2 files => 19504731 bytes
+2025/09/12-13:10:46.225 8722 compacted to: files[ 0 0 9 0 0 0 0 ]
+2025/09/12-13:10:46.225 8722 Delete type=2 #878
+2025/09/12-13:10:46.225 8722 Delete type=2 #879
+2025/09/12-13:10:46.225 8722 Delete type=2 #880
+2025/09/12-13:10:46.226 8722 Delete type=2 #881
+2025/09/12-13:10:46.226 8722 Delete type=2 #882
+2025/09/12-13:10:46.226 8722 Delete type=2 #883
+2025/09/12-13:10:46.226 8722 Delete type=2 #884
+2025/09/12-13:10:46.226 8722 Delete type=2 #885
+2025/09/12-13:10:46.226 8722 Delete type=2 #886
+2025/09/12-13:10:46.226 8722 Delete type=2 #889

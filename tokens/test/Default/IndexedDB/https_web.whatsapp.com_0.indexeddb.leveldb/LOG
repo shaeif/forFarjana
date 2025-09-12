@@ -1,0 +1,29 @@
+2025/09/11-21:41:01.000 2c353 Reusing MANIFEST /home/shaeif/workspace/forFarjana/tokens/test/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/09/11-21:41:01.001 2c353 Recovering log #472
+2025/09/11-21:41:01.001 2c353 Reusing old log /home/shaeif/workspace/forFarjana/tokens/test/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/000472.log 
+2025/09/11-21:41:02.408 2c353 Level-0 table #485: started
+2025/09/11-21:41:02.415 2c353 Level-0 table #485: 30009 bytes OK
+2025/09/11-21:41:02.428 2c353 Delete type=0 #472
+2025/09/11-21:41:02.428 2c353 Manual compaction at level-0 from '\x00-\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00.\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/09/11-21:41:03.846 2c355 Compacting 1@1 + 9@2 files
+2025/09/11-21:41:03.913 2c355 Generated table #486@1: 62336 keys, 2225687 bytes
+2025/09/11-21:41:03.989 2c355 Generated table #487@1: 46889 keys, 2209479 bytes
+2025/09/11-21:41:04.014 2c355 Generated table #488@1: 1808 keys, 2147203 bytes
+2025/09/11-21:41:04.044 2c355 Generated table #489@1: 2957 keys, 2151158 bytes
+2025/09/11-21:41:04.070 2c355 Generated table #490@1: 3166 keys, 2159479 bytes
+2025/09/11-21:41:04.123 2c355 Generated table #491@1: 30462 keys, 2253263 bytes
+2025/09/11-21:41:04.171 2c355 Generated table #492@1: 27791 keys, 2204128 bytes
+2025/09/11-21:41:04.232 2c355 Generated table #493@1: 78512 keys, 2223739 bytes
+2025/09/11-21:41:04.268 2c355 Generated table #494@1: 54049 keys, 1263950 bytes
+2025/09/11-21:41:04.268 2c355 Compacted 1@1 + 9@2 files => 18838086 bytes
+2025/09/11-21:41:04.280 2c355 compacted to: files[ 0 0 9 0 0 0 0 ]
+2025/09/11-21:41:04.280 2c355 Delete type=2 #474
+2025/09/11-21:41:04.281 2c355 Delete type=2 #475
+2025/09/11-21:41:04.281 2c355 Delete type=2 #476
+2025/09/11-21:41:04.281 2c355 Delete type=2 #477
+2025/09/11-21:41:04.281 2c355 Delete type=2 #478
+2025/09/11-21:41:04.281 2c355 Delete type=2 #479
+2025/09/11-21:41:04.281 2c355 Delete type=2 #480
+2025/09/11-21:41:04.281 2c355 Delete type=2 #481
+2025/09/11-21:41:04.281 2c355 Delete type=2 #482
+2025/09/11-21:41:04.281 2c355 Delete type=2 #485
