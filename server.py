@@ -26,6 +26,9 @@ class WhatsAppSender:
         self._stop_event = threading.Event()
         self.video_caption = "🇸🇦✨ Celebrate Saudi National Day with your exclusive calligraphy masterpiece from the Live Calligraphy Videobooth! 🎉\n\nShare the pride and joy of this special moment, crafted just for you!\n \n With heartfelt vibes,\n The Live Calligraphy Video Booth Team\n 📷 Join the celebration: @far.j.ana | @kareemgraphy #SaudiNationalDay"
         self.video_dir = "./videos"
+        self.image_dir = "./images"
+        self.image_caption = "🇸🇦✨ Celebrate Saudi National Day with your exclusive calligraphy masterpiece from the Live Calligraphy Videobooth! 🎉\n\nShare the pride and joy of this special moment, crafted just for you!\n \n With heartfelt vibes,\n The Live Calligraphy Video Booth Team\n 📷 Join the celebration: @far.j.ana | @kareemgraphy #SaudiNationalDay"
+        self.default_caption = "🇸🇦✨ Celebrate Saudi National Day with your exclusive calligraphy masterpiece from the Live Calligraphy Videobooth! 🎉\n\nShare the pride and joy of this special moment, crafted just for you!\n \n With heartfelt vibes,\n The Live Calligraphy Video Booth Team\n 📷 Join the celebration: @far.j.ana | @kareemgraphy #SaudiNationalDay"
 
     def _create_event_loop(self):
         if self.loop is None:
@@ -154,7 +157,7 @@ class WhatsAppSender:
             logger.error(f"Error sending message to {phone_number}: {str(e)}")
             return {'success': False, 'message': f'Error: {str(e)}'}
 
-    async def _send_file_async(self, phone_number: str, file_path: str):
+    async def _send_video_file_async(self, phone_number: str, file_path: str):
         try:
             if not self.initialized:
                 raise Exception("WhatsApp client not initialized. Please call initialize() first.")
@@ -184,14 +187,40 @@ class WhatsAppSender:
             logger.error(f"Error sending file: {str(e)}")
             return {'success': False, 'message': f'Error: {str(e)}'}
 
+    async def _send_image_file_async(self, phone_number: str, file_path: str):
+        try:
+            if not self.initialized:
+                raise Exception("WhatsApp client not initialized. Please call initialize() first.")
+            if not phone_number or not file_path:
+                return {'success': False, 'message': 'Phone number and file path are required'}
+            phone_number = phone_number.replace('+', '')
+            chat_id = f"{phone_number}@c.us"
+            logger.info(f"Sending file to {chat_id}: {file_path}...")
+
+            result = self.client.sendImage( 
+                chat_id,
+                file_path,
+                os.path.basename(file_path),
+                self.image_caption
+            )
+            logger.info(f"sendFile result: {result}")
+            if result and result.get('ack') in [1, 2, 3]:
+                logger.info(f"File sent successfully to {phone_number}")
+                return {'success': True, 'message': 'File sent successfully'}
+            else:
+                logger.warning(f"Failed to send file to {phone_number}: {result}")
+                return {'success': False, 'message': f'Failed to send file: {result}'}
+        except Exception as e:
+            logger.error(f"Error sending file: {str(e)}")
+            return {'success': False, 'message': f'Error: {str(e)}'}
+
     def send_message(self, phone_number: str, message: str) -> dict:
         async def send_coro():
             return await self._send_message_async(phone_number, message)
         result = self._run_async_in_thread(send_coro())
         return result if result else {'success': False, 'message': 'Timeout or error in message sending'}
 
-    def send_file(self, phone_number: str, file_path: str) -> dict:
-        # Validate file existence
+    def send_video_file(self, phone_number: str, file_path: str) -> dict:
         if not os.path.exists(file_path):
             logger.error(f"File not found: {file_path}")
             fallback_result = self.save_to_csv(phone_number, file_path)
@@ -201,7 +230,7 @@ class WhatsAppSender:
             }
         
         async def send_coro():
-            return await self._send_file_async(phone_number, file_path)
+            return await self._send_video_file_async(phone_number, file_path)
         
         try:
             result = self._run_async_in_thread(send_coro())
@@ -222,22 +251,55 @@ class WhatsAppSender:
                 'success': False,
                 'message': f"Error sending file: {str(e)}. Fallback: {fallback_result}"
             }
+            
+    def send_image_file(self, phone_number: str, file_path: str) -> dict:
+            if not os.path.exists(file_path):
+                logger.error(f"File not found: {file_path}")
+                fallback_result = self.save_to_csv(phone_number, file_path)
+                return {
+                    'success': False,
+                    'message': f'File not found: {file_path}. Fallback: {fallback_result}'
+                }
+            
+            async def send_coro():
+                return await self._send_image_file_async(phone_number, file_path)
+            
+            try:
+                result = self._run_async_in_thread(send_coro())
+                if result and result.get('success', False):
+                    logger.info(f"File sent successfully to {phone_number}")
+                    return result
+                else:
+                    logger.warning(f"File sending failed, falling back to CSV: {result}")
+                    fallback_result = self.save_to_csv(phone_number, file_path)
+                    return {
+                        'success': False,
+                        'message': f"File sending failed: {result.get('message', 'Unknown error')}. Fallback: {fallback_result}"
+                    }
+            except Exception as e:
+                logger.error(f"Error in send_file: {str(e)}")
+                fallback_result = self.save_to_csv(phone_number, file_path)
+                return {
+                    'success': False,
+                    'message': f"Error sending file: {str(e)}. Fallback: {fallback_result}"
+                }
 
     def save_to_csv(self, phone_number: str, file_path: str) -> str:
-        csv_file = os.path.join(self.video_dir, "video_files.csv")
-        headers = ['Phone Number', 'File Path']
-        try:
-            file_exists = os.path.isfile(csv_file)
-            with open(csv_file, mode='a', newline='') as file:
-                writer = csv.writer(file)
-                if not file_exists:
-                    writer.writerow(headers)
-                writer.writerow([phone_number, file_path])
-            logger.info(f"Data successfully appended to {csv_file}")
-            return f"Data successfully appended to {csv_file}"
-        except Exception as e:
-            logger.error(f"Error writing to CSV: {str(e)}")
-            return f"Failed to append to {csv_file}: {str(e)}"
+            csv_file = "error_files.csv"
+            headers = ['Phone Number', 'File Path']
+            try:
+                file_exists = os.path.isfile(csv_file)
+                with open(csv_file, mode='a', newline='') as file:
+                    writer = csv.writer(file)
+                    if not file_exists:
+                        writer.writerow(headers)
+                    writer.writerow([phone_number, file_path])
+                sentry_sdk.capture_message(f"Data successfully appended to {csv_file}", level="info")
+                return f"Data successfully appended to {csv_file}"
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
+                return f"Failed to append to {csv_file}: {str(e)}"
+
 
     def close(self):
         try:
@@ -278,21 +340,40 @@ def send_whatsapp_message():
         logger.error(f"Error in send_whatsapp_message: {str(e)}")
         return jsonify({'success': False, 'message': f'Server error: {str(e)}'}), 500
 
-@app.route('/send_file', methods=['POST'])
-def send_whatsapp_file():
+@app.route('/send_video_file', methods=['POST'])
+def send_video_file():
     try:
         data = request.get_json()
         if not data:
             return jsonify({'success': False, 'message': 'No JSON data provided'}), 400
         phone_number = data.get('phone_number')
         file_name = data.get('file_name')
+        whatsapp_sender.video_caption = data.get('caption', whatsapp_sender.default_caption)
         if not phone_number or not file_name:
             return jsonify({'success': False, 'message': 'phone_number and file_name are required'}), 400
         file_path = os.path.join(whatsapp_sender.video_dir, file_name)
-        result = whatsapp_sender.send_file(phone_number, file_path)
+        result = whatsapp_sender.send_video_file(phone_number, file_path)
         return jsonify(result)
     except Exception as e:
-        logger.error(f"Error in send_whatsapp_file: {str(e)}")
+        logger.error(f"Error in send_video_file: {str(e)}")
+        return jsonify({'success': False, 'message': f'Server error: {str(e)}'}), 500
+    
+@app.route('/send_image_file', methods=['POST'])
+def send_image_file():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'No JSON data provided'}), 400
+        phone_number = data.get('phone_number')
+        file_name = data.get('file_name')
+        whatsapp_sender.image_caption = data.get('caption', whatsapp_sender.default_caption)
+        if not phone_number or not file_name:
+            return jsonify({'success': False, 'message': 'phone_number and file_name are required'}), 400
+        file_path = os.path.join(whatsapp_sender.image_dir, file_name)
+        result = whatsapp_sender.send_image_file(phone_number, file_path)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error in send_image_file: {str(e)}")
         return jsonify({'success': False, 'message': f'Server error: {str(e)}'}), 500
 
 @app.route('/health', methods=['GET'])

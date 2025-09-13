@@ -1,0 +1,14 @@
+videos*
+images*
+venv*
+.vscode*
+__pycache__*
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+*.csv
+.DS_Store
+token*

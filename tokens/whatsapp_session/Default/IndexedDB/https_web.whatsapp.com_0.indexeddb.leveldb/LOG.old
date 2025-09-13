@@ -1,29 +1,29 @@
-2025/09/12-13:09:41.553 83d6 Reusing MANIFEST /home/shaeif/workspace/forFarjana/tokens/whatsapp_session/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
-2025/09/12-13:09:41.554 83d6 Recovering log #864
-2025/09/12-13:09:41.620 83d6 Reusing old log /home/shaeif/workspace/forFarjana/tokens/whatsapp_session/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/000864.log 
-2025/09/12-13:09:43.015 83e5 Level-0 table #877: started
-2025/09/12-13:09:43.069 83e5 Level-0 table #877: 1171384 bytes OK
-2025/09/12-13:09:43.142 83e5 Delete type=0 #864
-2025/09/12-13:09:43.143 83d6 Manual compaction at level-0 from '\x00\x8b\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x8c\x00\x00\x00' @ 0 : 0; will stop at (end)
-2025/09/12-13:09:44.436 83d9 Compacting 1@1 + 9@2 files
-2025/09/12-13:09:44.558 83d9 Generated table #878@1: 77482 keys, 2242789 bytes
-2025/09/12-13:09:44.646 83d9 Generated table #879@1: 45215 keys, 2210436 bytes
-2025/09/12-13:09:44.702 83d9 Generated table #880@1: 9299 keys, 2163468 bytes
-2025/09/12-13:09:44.752 83d9 Generated table #881@1: 2375 keys, 2148079 bytes
-2025/09/12-13:09:44.804 83d9 Generated table #882@1: 3091 keys, 2154460 bytes
-2025/09/12-13:09:44.926 83d9 Generated table #883@1: 21978 keys, 2220903 bytes
-2025/09/12-13:09:45.000 83d9 Generated table #884@1: 32113 keys, 2237279 bytes
-2025/09/12-13:09:45.080 83d9 Generated table #885@1: 52926 keys, 2191577 bytes
-2025/09/12-13:09:45.217 83d9 Generated table #886@1: 78705 keys, 1865814 bytes
-2025/09/12-13:09:45.218 83d9 Compacted 1@1 + 9@2 files => 19434805 bytes
-2025/09/12-13:09:45.291 83d9 compacted to: files[ 0 0 9 0 0 0 0 ]
-2025/09/12-13:09:45.292 83d9 Delete type=2 #866
-2025/09/12-13:09:45.292 83d9 Delete type=2 #867
-2025/09/12-13:09:45.292 83d9 Delete type=2 #868
-2025/09/12-13:09:45.292 83d9 Delete type=2 #869
-2025/09/12-13:09:45.292 83d9 Delete type=2 #870
-2025/09/12-13:09:45.292 83d9 Delete type=2 #871
-2025/09/12-13:09:45.292 83d9 Delete type=2 #872
-2025/09/12-13:09:45.292 83d9 Delete type=2 #873
-2025/09/12-13:09:45.292 83d9 Delete type=2 #874
-2025/09/12-13:09:45.292 83d9 Delete type=2 #877
+2025/09/14-02:49:11.726 27f97 Reusing MANIFEST /home/shaeif/workspace/forFarjana/tokens/whatsapp_session/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/09/14-02:49:11.726 27f97 Recovering log #666
+2025/09/14-02:49:11.769 27f97 Reusing old log /home/shaeif/workspace/forFarjana/tokens/whatsapp_session/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/000666.log 
+2025/09/14-02:49:13.184 27f97 Level-0 table #679: started
+2025/09/14-02:49:13.205 27f97 Level-0 table #679: 645999 bytes OK
+2025/09/14-02:49:13.220 27f97 Delete type=0 #666
+2025/09/14-02:49:13.221 27f97 Manual compaction at level-0 from '\x00V\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00W\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/09/14-02:49:14.791 27f98 Compacting 1@1 + 9@2 files
+2025/09/14-02:49:14.871 27f98 Generated table #680@1: 69107 keys, 2229146 bytes
+2025/09/14-02:49:14.960 27f98 Generated table #681@1: 48687 keys, 2214443 bytes
+2025/09/14-02:49:14.993 27f98 Generated table #682@1: 2938 keys, 2150228 bytes
+2025/09/14-02:49:15.025 27f98 Generated table #683@1: 2680 keys, 2149090 bytes
+2025/09/14-02:49:15.059 27f98 Generated table #684@1: 3046 keys, 2156149 bytes
+2025/09/14-02:49:15.127 27f98 Generated table #685@1: 27251 keys, 2240759 bytes
+2025/09/14-02:49:15.192 27f98 Generated table #686@1: 29129 keys, 2216744 bytes
+2025/09/14-02:49:15.268 27f98 Generated table #687@1: 65858 keys, 2205364 bytes
+2025/09/14-02:49:15.369 27f98 Generated table #688@1: 88094 keys, 2033029 bytes
+2025/09/14-02:49:15.369 27f98 Compacted 1@1 + 9@2 files => 19594952 bytes
+2025/09/14-02:49:15.381 27f98 compacted to: files[ 0 0 9 0 0 0 0 ]
+2025/09/14-02:49:15.382 27f98 Delete type=2 #668
+2025/09/14-02:49:15.382 27f98 Delete type=2 #669
+2025/09/14-02:49:15.382 27f98 Delete type=2 #670
+2025/09/14-02:49:15.382 27f98 Delete type=2 #671
+2025/09/14-02:49:15.382 27f98 Delete type=2 #672
+2025/09/14-02:49:15.382 27f98 Delete type=2 #673
+2025/09/14-02:49:15.382 27f98 Delete type=2 #674
+2025/09/14-02:49:15.382 27f98 Delete type=2 #675
+2025/09/14-02:49:15.382 27f98 Delete type=2 #676
+2025/09/14-02:49:15.382 27f98 Delete type=2 #679

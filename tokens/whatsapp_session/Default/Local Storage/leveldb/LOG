@@ -1,3 +1,5 @@
-2025/09/12-13:10:42.236 8742 Reusing MANIFEST /home/shaeif/workspace/forFarjana/tokens/whatsapp_session/Default/Local Storage/leveldb/MANIFEST-000001
-2025/09/12-13:10:42.241 8742 Recovering log #16
-2025/09/12-13:10:42.242 8742 Reusing old log /home/shaeif/workspace/forFarjana/tokens/whatsapp_session/Default/Local Storage/leveldb/000016.log 
+2025/09/14-02:55:37.866 28d09 Reusing MANIFEST /home/shaeif/workspace/forFarjana/tokens/whatsapp_session/Default/Local Storage/leveldb/MANIFEST-000001
+2025/09/14-02:55:37.871 28d09 Recovering log #6
+2025/09/14-02:55:37.871 28d09 Level-0 table #8: started
+2025/09/14-02:55:37.878 28d09 Level-0 table #8: 15362 bytes OK
+2025/09/14-02:55:37.892 28d09 Delete type=0 #6
