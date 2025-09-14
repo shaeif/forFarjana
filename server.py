@@ -24,7 +24,6 @@ class WhatsAppSender:
         self.session = session_name
         self.creator = None
         self.client = None
-        self.initialized = False
         self.loop = None
         self.thread = None
         self._stop_event = threading.Event()
@@ -39,6 +38,10 @@ class WhatsAppSender:
         self.default_caption = self.video_caption
         self.video_dir = "./videos"
         self.image_dir = "./images"
+        
+    def check_if_initialized(self) -> bool:
+        """Check if the WhatsApp client is initialized."""
+        return self.creator is not None and self.creator.state == 'CONNECTED'
 
     def _create_event_loop(self) -> asyncio.AbstractEventLoop:
         """Create and set up a new event loop if none exists."""
@@ -73,15 +76,14 @@ class WhatsAppSender:
 
     async def _initialize_async(self):
         """Initialize WhatsApp client asynchronously."""
-        if self.initialized:
+        if self.check_if_initialized():
             return
         try:
             capture_message("Initializing WhatsApp client...")
             self.creator = Create(session=self.session)
-            self.client = self.creator.start()  # Adjust to await if start is async
+            self.client = self.creator.start()
             if self.creator.state != 'CONNECTED':
                 raise Exception(f"Connection failed: {self.creator.state}")
-            self.initialized = True
             capture_message("WhatsApp client initialized successfully", level="info")
         except asyncio.TimeoutError:
             raise Exception("Timeout initializing WhatsApp client - please scan QR code")
@@ -166,7 +168,7 @@ class WhatsAppSender:
     async def _send_message_async(self, phone_number: str, message: str) -> Dict[str, any]:
         """Send a text message asynchronously."""
         try:
-            if not self.initialized:
+            if not self.check_if_initialized():
                 raise Exception("WhatsApp client not initialized.")
             if not phone_number or not message:
                 return {'success': False, 'message': 'Phone number and message are required'}
@@ -186,7 +188,7 @@ class WhatsAppSender:
     async def _send_video_file_async(self, phone_number: str, file_path: str) -> Dict[str, any]:
         """Send a video file asynchronously."""
         try:
-            if not self.initialized:
+            if not self.check_if_initialized():
                 raise Exception("WhatsApp client not initialized.")
             if not phone_number or not file_path:
                 return {'success': False, 'message': 'Phone number and file path are required'}
@@ -215,7 +217,7 @@ class WhatsAppSender:
     async def _send_image_file_async(self, phone_number: str, file_path: str) -> Dict[str, any]:
         """Send an image file asynchronously."""
         try:
-            if not self.initialized:
+            if not self.check_if_initialized():
                 raise Exception("WhatsApp client not initialized.")
             if not phone_number or not file_path:
                 return {'success': False, 'message': 'Phone number and file path are required'}
@@ -339,9 +341,12 @@ class WhatsAppSender:
 # Flask application setup
 app = Flask(__name__)
 whatsapp_sender = WhatsAppSender()
+whatsapp_sender.initialize()
 
 @app.route('/send_message', methods=['POST'])
 def send_whatsapp_message():
+    if whatsapp_sender.check_if_initialized() is False:
+        whatsapp_sender.initialize()
     """API endpoint to send a WhatsApp text message."""
     try:
         data = request.get_json()
@@ -359,6 +364,8 @@ def send_whatsapp_message():
 
 @app.route('/send_video_file', methods=['POST'])
 def send_video_file():
+    if whatsapp_sender.check_if_initialized() is False:
+        whatsapp_sender.initialize()
     """API endpoint to send a WhatsApp video file."""
     try:
         data = request.get_json()
@@ -378,6 +385,8 @@ def send_video_file():
 
 @app.route('/send_image_file', methods=['POST'])
 def send_image_file():
+    if whatsapp_sender.check_if_initialized() is False:
+        whatsapp_sender.initialize()
     """API endpoint to send a WhatsApp image file."""
     try:
         data = request.get_json()
@@ -400,7 +409,7 @@ def health_check():
     """API endpoint to check service health."""
     return jsonify({
         'status': 'healthy',
-        'whatsapp_initialized': whatsapp_sender.initialized
+        'whatsapp_initialized': whatsapp_sender.check_if_initialized()
     })
 
 @app.route('/', methods=['GET'])
