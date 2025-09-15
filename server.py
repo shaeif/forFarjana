@@ -11,12 +11,16 @@ from flask import Flask, request, jsonify
 from WPP_Whatsapp import Create
 import sentry_sdk
 from sentry_sdk import capture_message, capture_exception
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 # Initialize Sentry
 sentry_sdk.init(
     dsn="https://1633a41a7bdbd109b78e4c63916b9d3a@o1037254.ingest.us.sentry.io/4510005925707776",
     send_default_pii=True,
     traces_sample_rate=1.0,
+    integrations=[FlaskIntegration()],
+    environment="development",
+    enable_logs=True
 )
 
 class WhatsAppSender:
@@ -40,18 +44,18 @@ class WhatsAppSender:
         self.image_dir = "./images"
         
     def check_if_initialized(self) -> bool:
-        """Check if the WhatsApp client is initialized."""
+        sentry_sdk.logger.info("Checking if WhatsApp client is initialized")
         return self.creator is not None and self.creator.state == 'CONNECTED'
 
     def _create_event_loop(self) -> asyncio.AbstractEventLoop:
-        """Create and set up a new event loop if none exists."""
+        sentry_sdk.logger.info("Creating new event loop")
         if self.loop is None:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
         return self.loop
 
     def _run_async_in_thread(self, coro):
-        """Run an async coroutine in a separate thread with timeout handling."""
+        sentry_sdk.logger.info("Running async coroutine in thread")
         if self.thread is None or not self.thread.is_alive():
             self._create_event_loop()
             self.thread = threading.Thread(target=self._run_loop, daemon=True)
@@ -66,7 +70,7 @@ class WhatsAppSender:
             return None
 
     def _run_loop(self):
-        """Run the event loop indefinitely."""
+        sentry_sdk.logger.info("Starting event loop thread")
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         try:
@@ -75,16 +79,16 @@ class WhatsAppSender:
             self.loop.close()
 
     async def _initialize_async(self):
-        """Initialize WhatsApp client asynchronously."""
+        sentry_sdk.logger.info("Initializing WhatsApp client asynchronously")
         if self.check_if_initialized():
             return
         try:
-            capture_message("Initializing WhatsApp client...")
+            sentry_sdk.logger.info("Creating WhatsApp client")
             self.creator = Create(session=self.session)
             self.client = self.creator.start()
             if self.creator.state != 'CONNECTED':
                 raise Exception(f"Connection failed: {self.creator.state}")
-            capture_message("WhatsApp client initialized successfully", level="info")
+            sentry_sdk.logger.info("WhatsApp client initialized successfully")
         except asyncio.TimeoutError:
             raise Exception("Timeout initializing WhatsApp client - please scan QR code")
         except Exception as e:
@@ -92,7 +96,7 @@ class WhatsAppSender:
             raise Exception(f"Failed to initialize WhatsApp client: {str(e)}")
 
     def initialize(self) -> Dict[str, any]:
-        """Initialize WhatsApp client synchronously."""
+        sentry_sdk.logger.info("Starting WhatsApp client initialization")
         async def init_coro():
             await self._initialize_async()
         try:
@@ -103,7 +107,7 @@ class WhatsAppSender:
             return {'success': False, 'message': f'Initialization failed: {str(e)}'}
 
     def check_ffmpeg(self) -> bool:
-        """Check if FFmpeg is installed."""
+        sentry_sdk.logger.info("Checking if FFmpeg is installed")
         try:
             subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True)
             return True
@@ -113,7 +117,7 @@ class WhatsAppSender:
             return False
 
     def convert_to_mp4(self, input_path: str, output_path: str) -> bool:
-        """Convert video to MP4 using FFmpeg."""
+        sentry_sdk.logger.info(f"Converting video to MP4: {input_path}")
         if not self.check_ffmpeg():
             return False
         try:
@@ -121,7 +125,7 @@ class WhatsAppSender:
                 'ffmpeg', '-i', input_path, '-c:v', 'libx264', '-crf', '28',
                 '-preset', 'fast', '-c:a', 'aac', '-b:a', '128k', output_path
             ], capture_output=True, check=True)
-            capture_message(f"Converted video to {output_path}", level="info")
+            sentry_sdk.logger.info(f"Converted video to {output_path}")
             return True
         except subprocess.CalledProcessError as e:
             capture_exception(e)
@@ -130,24 +134,24 @@ class WhatsAppSender:
     def encode_video_to_base64(self, file_path: str, use_data_url: bool = True, convert: bool = False) -> Optional[Tuple[str, str]]:
         """Encode a video file to base64."""
         if not os.path.exists(file_path):
-            capture_message(f"File not found at {file_path}", level="error")
+            sentry_sdk.logger.error(f"File not found at {file_path}")
             return None
         mime_type, _ = mimetypes.guess_type(file_path)
         if not mime_type or not mime_type.startswith('video/'):
             mime_type = 'video/mp4'
-            capture_message(f"Could not detect MIME type, using {mime_type}", level="warning")
+            sentry_sdk.logger.warning(f"Could not detect MIME type, using {mime_type}")
         working_path = file_path
         if convert and file_path.lower().endswith(('.mov', '.avi', '.mkv')):
             temp_path = f"{os.path.splitext(file_path)[0]}_converted.mp4"
             if self.convert_to_mp4(file_path, temp_path):
                 working_path = temp_path
                 mime_type = 'video/mp4'
-                capture_message(f"Converted to {temp_path}", level="info")
+                sentry_sdk.logger.info(f"Converted to {temp_path}")
             else:
-                capture_message("Continuing with original file due to conversion failure", level="warning")
+                sentry_sdk.logger.warning("Continuing with original file due to conversion failure")
         file_size_mb = os.path.getsize(working_path) / (1024 * 1024)
         if file_size_mb > 50:
-            capture_message(f"File size ({file_size_mb:.2f}MB) exceeds WhatsApp's 50MB limit.", level="warning")
+            sentry_sdk.logger.warning(f"File size ({file_size_mb:.2f}MB) exceeds WhatsApp's 50MB limit.")
         try:
             with open(working_path, 'rb') as f:
                 base64_bytes = base64.b64encode(f.read())
@@ -156,37 +160,37 @@ class WhatsAppSender:
                 base64_str = f"data:{mime_type};base64,{base64_str}"
             if convert and working_path != file_path and os.path.exists(working_path):
                 os.remove(working_path)
-                capture_message(f"Cleaned up temporary file: {working_path}", level="info")
+                sentry_sdk.logger.info(f"Cleaned up temporary file: {working_path}")
             return base64_str, mime_type
         except MemoryError:
-            capture_message("File too large for base64 encoding.", level="error")
+            sentry_sdk.logger.error("File too large for base64 encoding.")
             return None
         except Exception as e:
             capture_exception(e)
             return None
 
     async def _send_message_async(self, phone_number: str, message: str) -> Dict[str, any]:
-        """Send a text message asynchronously."""
+        sentry_sdk.logger.info("Sending message asynchronously")
         try:
             if not self.check_if_initialized():
                 raise Exception("WhatsApp client not initialized.")
             if not phone_number or not message:
                 return {'success': False, 'message': 'Phone number and message are required'}
             phone_number = phone_number.replace('+', '')
-            capture_message(f"Sending message to {phone_number}: {message[:50]}...", level="info")
+            sentry_sdk.logger.info(f"Sending message to {phone_number}: {message[:50]}...")
             result = self.client.sendText(phone_number, message)
             if result:
-                capture_message(f"Message sent successfully to {phone_number}", level="info")
+                sentry_sdk.logger.info(f"Message sent successfully to {phone_number}")
                 return {'success': True, 'message': 'Message sent successfully'}
             else:
-                capture_message(f"Failed to send message to {phone_number}", level="warning")
+                sentry_sdk.logger.warning(f"Failed to send message to {phone_number}")
                 return {'success': False, 'message': 'Failed to send message'}
         except Exception as e:
             capture_exception(e)
             return {'success': False, 'message': f'Error: {str(e)}'}
 
     async def _send_video_file_async(self, phone_number: str, file_path: str) -> Dict[str, any]:
-        """Send a video file asynchronously."""
+        sentry_sdk.logger.info("Sending video file asynchronously")
         try:
             if not self.check_if_initialized():
                 raise Exception("WhatsApp client not initialized.")
@@ -194,7 +198,7 @@ class WhatsAppSender:
                 return {'success': False, 'message': 'Phone number and file path are required'}
             phone_number = phone_number.replace('+', '')
             chat_id = f"{phone_number}@c.us"
-            capture_message(f"Sending video to {chat_id}: {file_path}...", level="info")
+            sentry_sdk.logger.info(f"Sending video to {chat_id}: {file_path}...")
             base64_str, mime_type = self.encode_video_to_base64(file_path, use_data_url=True, convert=True)
             if not base64_str:
                 return {'success': False, 'message': 'Failed to encode file to base64'}
@@ -205,17 +209,17 @@ class WhatsAppSender:
                 self.video_caption
             )
             if result and result.get('ack') in [1, 2, 3]:
-                capture_message(f"Video sent successfully to {phone_number}", level="info")
+                sentry_sdk.logger.info(f"Video sent successfully to {phone_number}")
                 return {'success': True, 'message': 'File sent successfully'}
             else:
-                capture_message(f"Failed to send video to {phone_number}: {result}", level="warning")
+                sentry_sdk.logger.warning(f"Failed to send video to {phone_number}: {result}")
                 return {'success': False, 'message': f'Failed to send file: {result}'}
         except Exception as e:
             capture_exception(e)
             return {'success': False, 'message': f'Error: {str(e)}'}
 
     async def _send_image_file_async(self, phone_number: str, file_path: str) -> Dict[str, any]:
-        """Send an image file asynchronously."""
+        sentry_sdk.logger.info("Sending image file asynchronously")
         try:
             if not self.check_if_initialized():
                 raise Exception("WhatsApp client not initialized.")
@@ -223,7 +227,7 @@ class WhatsAppSender:
                 return {'success': False, 'message': 'Phone number and file path are required'}
             phone_number = phone_number.replace('+', '')
             chat_id = f"{phone_number}@c.us"
-            capture_message(f"Sending image to {chat_id}: {file_path}...", level="info")
+            sentry_sdk.logger.info(f"Sending image to {chat_id}: {file_path}...")
             result = self.client.sendImage(
                 chat_id,
                 file_path,
@@ -231,26 +235,26 @@ class WhatsAppSender:
                 self.image_caption
             )
             if result and result.get('ack') in [1, 2, 3]:
-                capture_message(f"Image sent successfully to {phone_number}", level="info")
+                sentry_sdk.logger.info(f"Image sent successfully to {phone_number}")
                 return {'success': True, 'message': 'File sent successfully'}
             else:
-                capture_message(f"Failed to send image to {phone_number}: {result}", level="warning")
+                sentry_sdk.logger.warning(f"Failed to send image to {phone_number}: {result}")
                 return {'success': False, 'message': f'Failed to send file: {result}'}
         except Exception as e:
             capture_exception(e)
             return {'success': False, 'message': f'Error: {str(e)}'}
 
     def send_message(self, phone_number: str, message: str) -> Dict[str, any]:
-        """Send a text message synchronously."""
+        sentry_sdk.logger.info("Sending message synchronously")
         async def send_coro():
             return await self._send_message_async(phone_number, message)
         result = self._run_async_in_thread(send_coro())
         return result if result else {'success': False, 'message': 'Timeout or error in message sending'}
 
     def send_video_file(self, phone_number: str, file_path: str) -> Dict[str, any]:
-        """Send a video file synchronously with CSV fallback."""
+        sentry_sdk.logger.info("Sending video file synchronously")
         if not os.path.exists(file_path):
-            capture_message(f"File not found: {file_path}", level="error")
+            sentry_sdk.logger.error(f"File not found: {file_path}")
             fallback_result = self.save_to_csv(phone_number, file_path)
             return {
                 'success': False,
@@ -277,9 +281,9 @@ class WhatsAppSender:
             }
 
     def send_image_file(self, phone_number: str, file_path: str) -> Dict[str, any]:
-        """Send an image file synchronously with CSV fallback."""
+        sentry_sdk.logger.info("Sending image file synchronously")
         if not os.path.exists(file_path):
-            capture_message(f"File not found: {file_path}", level="error")
+            sentry_sdk.logger.error(f"File not found: {file_path}")
             fallback_result = self.save_to_csv(phone_number, file_path)
             return {
                 'success': False,
@@ -306,7 +310,7 @@ class WhatsAppSender:
             }
 
     def save_to_csv(self, phone_number: str, file_path: str) -> str:
-        """Save failed send attempts to a CSV file."""
+        sentry_sdk.logger.error(f"ERROR: Saving failed send attempt to CSV: {phone_number}, {file_path}")
         csv_file = "error_files.csv"
         headers = ['Phone Number', 'File Path']
         try:
@@ -316,7 +320,7 @@ class WhatsAppSender:
                 if not file_exists:
                     writer.writerow(headers)
                 writer.writerow([phone_number, file_path])
-            capture_message(f"Data successfully appended to {csv_file}", level="info")
+            sentry_sdk.logger.warning(f"Data successfully appended to {csv_file}")
             return f"Data successfully appended to {csv_file}"
         except Exception as e:
             capture_exception(e)
@@ -324,12 +328,13 @@ class WhatsAppSender:
 
     def close(self):
         """Cleanly close the WhatsApp client and event loop."""
+        sentry_sdk.logger.info("Closing WhatsApp client and event loop")
         try:
             if self.loop and self.loop.is_running():
                 async def close_coro():
                     if self.client:
-                        await self.client.close()
-                        capture_message("WhatsApp client closed", level="info")
+                        self.client.close()
+                        sentry_sdk.logger.info("WhatsApp client closed")
                 future = asyncio.run_coroutine_threadsafe(close_coro(), self.loop)
                 future.result(timeout=10.0)
             if self.thread and self.thread.is_alive():
@@ -346,8 +351,10 @@ whatsapp_sender.initialize()
 @app.route('/send_message', methods=['POST'])
 def send_whatsapp_message():
     if whatsapp_sender.check_if_initialized() is False:
+        sentry_sdk.logger.info("WhatsApp client not initialized, initializing now")
         whatsapp_sender.initialize()
     """API endpoint to send a WhatsApp text message."""
+    sentry_sdk.logger.info("Sending WhatsApp text message")
     try:
         data = request.get_json()
         if not data:
@@ -365,8 +372,10 @@ def send_whatsapp_message():
 @app.route('/send_video_file', methods=['POST'])
 def send_video_file():
     if whatsapp_sender.check_if_initialized() is False:
+        sentry_sdk.logger.info("WhatsApp client not initialized, initializing now")
         whatsapp_sender.initialize()
     """API endpoint to send a WhatsApp video file."""
+    sentry_sdk.logger.info("Sending WhatsApp video file")
     try:
         data = request.get_json()
         if not data:
@@ -386,6 +395,7 @@ def send_video_file():
 @app.route('/send_image_file', methods=['POST'])
 def send_image_file():
     if whatsapp_sender.check_if_initialized() is False:
+        sentry_sdk.logger.info("WhatsApp client not initialized, initializing now")
         whatsapp_sender.initialize()
     """API endpoint to send a WhatsApp image file."""
     try:
@@ -407,6 +417,7 @@ def send_image_file():
 @app.route('/health', methods=['GET'])
 def health_check():
     """API endpoint to check service health."""
+    sentry_sdk.logger.info("Performing health check")
     return jsonify({
         'status': 'healthy',
         'whatsapp_initialized': whatsapp_sender.check_if_initialized()
@@ -415,6 +426,7 @@ def health_check():
 @app.route('/', methods=['GET'])
 def home():
     """API root endpoint with available endpoints information."""
+    sentry_sdk.logger.info("Accessing API root endpoint")
     return jsonify({
         'message': 'WhatsApp Sender API',
         'endpoints': {
@@ -424,12 +436,13 @@ def home():
             'health': 'GET /health',
             'initialize': 'POST /initialize'
         },
-        'initialized': whatsapp_sender.initialized
+        'initialized': whatsapp_sender.check_if_initialized()
     })
 
 @app.route('/initialize', methods=['POST'])
 def initialize_whatsapp():
     """API endpoint to initialize WhatsApp client."""
+    sentry_sdk.logger.info("Initializing WhatsApp client via API")
     try:
         if whatsapp_sender.initialized:
             return jsonify({'success': True, 'message': 'Already initialized'})
@@ -440,8 +453,8 @@ def initialize_whatsapp():
         return jsonify({'success': False, 'message': f'Initialization error: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    capture_message("Starting Flask app. Call POST /initialize to set up WhatsApp client.", level="info")
     try:
-        app.run(debug=True, host='127.0.0.1', port=5000)
+        app.run(debug=False, host='127.0.0.1', port=5000, use_reloader=False)
+        sentry_sdk.logger.info("Flask app started on http://127.0.0.1:5000")
     finally:
         whatsapp_sender.close()
