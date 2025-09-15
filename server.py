@@ -62,6 +62,7 @@ class WhatsAppSender:
             self.thread.start()
         while self.loop is None or not self.loop.is_running():
             time.sleep(0.1)
+            
         future = asyncio.run_coroutine_threadsafe(coro, self.loop)
         try:
             return future.result(timeout=30.0)
@@ -78,7 +79,7 @@ class WhatsAppSender:
         finally:
             self.loop.close()
 
-    async def _initialize_async(self):
+    def _initialize_async(self):
         sentry_sdk.logger.info("Initializing WhatsApp client asynchronously")
         if self.check_if_initialized():
             return
@@ -97,8 +98,8 @@ class WhatsAppSender:
 
     def initialize(self) -> Dict[str, any]:
         sentry_sdk.logger.info("Starting WhatsApp client initialization")
-        async def init_coro():
-            await self._initialize_async()
+        def init_coro():
+            self._initialize_async()
         try:
             self._run_async_in_thread(init_coro())
             return {'success': True, 'message': 'Initialization successful'}
@@ -169,7 +170,7 @@ class WhatsAppSender:
             capture_exception(e)
             return None
 
-    async def _send_message_async(self, phone_number: str, message: str) -> Dict[str, any]:
+    def _send_message_async(self, phone_number: str, message: str) -> Dict[str, any]:
         sentry_sdk.logger.info("Sending message asynchronously")
         try:
             if not self.check_if_initialized():
@@ -189,7 +190,7 @@ class WhatsAppSender:
             capture_exception(e)
             return {'success': False, 'message': f'Error: {str(e)}'}
 
-    async def _send_video_file_async(self, phone_number: str, file_path: str) -> Dict[str, any]:
+    def _send_video_file_async(self, phone_number: str, file_path: str) -> Dict[str, any]:
         sentry_sdk.logger.info("Sending video file asynchronously")
         try:
             if not self.check_if_initialized():
@@ -218,7 +219,7 @@ class WhatsAppSender:
             capture_exception(e)
             return {'success': False, 'message': f'Error: {str(e)}'}
 
-    async def _send_image_file_async(self, phone_number: str, file_path: str) -> Dict[str, any]:
+    def _send_image_file_async(self, phone_number: str, file_path: str) -> Dict[str, any]:
         sentry_sdk.logger.info("Sending image file asynchronously")
         try:
             if not self.check_if_initialized():
@@ -247,7 +248,7 @@ class WhatsAppSender:
     def send_message(self, phone_number: str, message: str) -> Dict[str, any]:
         sentry_sdk.logger.info("Sending message synchronously")
         async def send_coro():
-            return await self._send_message_async(phone_number, message)
+            return self._send_message_async(phone_number, message)
         result = self._run_async_in_thread(send_coro())
         return result if result else {'success': False, 'message': 'Timeout or error in message sending'}
 
@@ -261,7 +262,7 @@ class WhatsAppSender:
                 'message': f'File not found: {file_path}. Fallback: {fallback_result}'
             }
         async def send_coro():
-            return await self._send_video_file_async(phone_number, file_path)
+            return self._send_video_file_async(phone_number, file_path)
         try:
             result = self._run_async_in_thread(send_coro())
             if result and result.get('success', False):
@@ -290,7 +291,7 @@ class WhatsAppSender:
                 'message': f'File not found: {file_path}. Fallback: {fallback_result}'
             }
         async def send_coro():
-            return await self._send_image_file_async(phone_number, file_path)
+            return self._send_image_file_async(phone_number, file_path)
         try:
             result = self._run_async_in_thread(send_coro())
             if result and result.get('success', False):
@@ -331,7 +332,7 @@ class WhatsAppSender:
         sentry_sdk.logger.info("Closing WhatsApp client and event loop")
         try:
             if self.loop and self.loop.is_running():
-                async def close_coro():
+                def close_coro():
                     if self.client:
                         self.client.close()
                         sentry_sdk.logger.info("WhatsApp client closed")
@@ -350,7 +351,7 @@ whatsapp_sender.initialize()
 
 @app.route('/send_message', methods=['POST'])
 def send_whatsapp_message():
-    if whatsapp_sender.check_if_initialized() is False:
+    if not whatsapp_sender.check_if_initialized():
         sentry_sdk.logger.info("WhatsApp client not initialized, initializing now")
         whatsapp_sender.initialize()
     """API endpoint to send a WhatsApp text message."""
@@ -371,7 +372,7 @@ def send_whatsapp_message():
 
 @app.route('/send_video_file', methods=['POST'])
 def send_video_file():
-    if whatsapp_sender.check_if_initialized() is False:
+    if not whatsapp_sender.check_if_initialized():
         sentry_sdk.logger.info("WhatsApp client not initialized, initializing now")
         whatsapp_sender.initialize()
     """API endpoint to send a WhatsApp video file."""
@@ -387,14 +388,17 @@ def send_video_file():
             return jsonify({'success': False, 'message': 'phone_number and file_name are required'}), 400
         file_path = os.path.join(whatsapp_sender.video_dir, file_name)
         result = whatsapp_sender.send_video_file(phone_number, file_path)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
     except Exception as e:
         capture_exception(e)
         return jsonify({'success': False, 'message': f'Server error: {str(e)}'}), 500
 
 @app.route('/send_image_file', methods=['POST'])
 def send_image_file():
-    if whatsapp_sender.check_if_initialized() is False:
+    if not whatsapp_sender.check_if_initialized():
         sentry_sdk.logger.info("WhatsApp client not initialized, initializing now")
         whatsapp_sender.initialize()
     """API endpoint to send a WhatsApp image file."""
@@ -409,7 +413,10 @@ def send_image_file():
             return jsonify({'success': False, 'message': 'phone_number and file_name are required'}), 400
         file_path = os.path.join(whatsapp_sender.image_dir, file_name)
         result = whatsapp_sender.send_image_file(phone_number, file_path)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
     except Exception as e:
         capture_exception(e)
         return jsonify({'success': False, 'message': f'Server error: {str(e)}'}), 500
@@ -444,10 +451,13 @@ def initialize_whatsapp():
     """API endpoint to initialize WhatsApp client."""
     sentry_sdk.logger.info("Initializing WhatsApp client via API")
     try:
-        if whatsapp_sender.initialized:
+        if whatsapp_sender.check_if_initialized():
             return jsonify({'success': True, 'message': 'Already initialized'})
         result = whatsapp_sender.initialize()
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
     except Exception as e:
         capture_exception(e)
         return jsonify({'success': False, 'message': f'Initialization error: {str(e)}'}), 500
